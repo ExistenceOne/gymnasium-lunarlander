@@ -14,7 +14,7 @@ def main():
     qnet = QNet(n_features=8, n_actions=4)
 
     dqn_tester = DqnTester(
-        env=test_env, qnet = qnet, env_name=ENV_NAME, current_dir=CURRENT_DIR
+        env=test_env, qnet=qnet, env_name=ENV_NAME, current_dir=CURRENT_DIR
     )
     dqn_tester.test()
 

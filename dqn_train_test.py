@@ -14,7 +14,8 @@ import collections
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 Transition = collections.namedtuple(
-    typename="Transition", field_names=["observation", "action", "next_observation", "reward", "done"]
+    typename="Transition",
+    field_names=["observation", "action", "next_observation", "reward", "done"]
 )
 
 
@@ -285,6 +286,8 @@ class DqnTester:
     def __init__(self, env: gym.Env, qnet, env_name, current_dir):
         self.env = env
 
+        self.current_time = datetime.now().astimezone().strftime("%Y-%m-%d_%H-%M-%S")
+
         self.model_dir = os.path.join(current_dir, "models")
         if not os.path.exists(self.model_dir):
             os.mkdir(self.model_dir)
@@ -295,7 +298,7 @@ class DqnTester:
 
         self.env = gym.wrappers.RecordVideo(
             env=self.env, video_folder=self.video_dir,
-            name_prefix="dqn_{0}_test_video".format(env_name)
+            name_prefix="{0}_{1}".format(env_name, self.current_time)
         )
 
         self.qnet = qnet
@@ -328,4 +331,4 @@ class DqnTester:
             done = terminated or truncated
 
         self.env.close()
-        print("[TOAL_STEPS: {0:3d}, EPISODE REWARD: {1:4.1f}".format(time_steps, episode_reward))
+        print("EPISODE_STEPS: {0:3d}, EPISODE REWARD: {1:4.1f}".format(time_steps, episode_reward))
