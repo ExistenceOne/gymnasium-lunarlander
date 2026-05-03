@@ -1,3 +1,5 @@
+# dqn_train_test.py
+
 import os
 import time
 from datetime import datetime
@@ -13,6 +15,7 @@ import collections
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+# Replay Buffer에서 사용할 Transition 정의
 Transition = collections.namedtuple(
     typename="Transition",
     field_names=["observation", "action", "next_observation", "reward", "done"]
@@ -22,7 +25,7 @@ Transition = collections.namedtuple(
 class ReplayBuffer:
     def __init__(self, capacity: int):
         self.buffer = collections.deque(maxlen=capacity)
-
+    # ...
     def size(self) -> int:
         return len(self.buffer)
 
@@ -36,22 +39,20 @@ class ReplayBuffer:
         self.buffer.clear()
 
     def sample(self, batch_size: int) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
-        # Get random index
+        # 무작위 배치 샘플링
         indices = np.random.choice(len(self.buffer), size=batch_size, replace=False)
-        # Sample
         observations, actions, next_observations, rewards, dones = zip(*[self.buffer[idx] for idx in indices])
 
-        # Convert to ndarray for speed up cuda
+        # tuple -> ndarray
         observations = np.array(observations)
         next_observations = np.array(next_observations)
-
         actions = np.array(actions)
         actions = np.expand_dims(actions, axis=-1) if actions.ndim == 1 else actions
         rewards = np.array(rewards)
         rewards = np.expand_dims(rewards, axis=-1) if rewards.ndim == 1 else rewards
         dones = np.array(dones, dtype=bool)
 
-        # Convert to tensor
+        # ndarray -> tensor
         observations = torch.tensor(observations, dtype=torch.float32, device=DEVICE)
         actions = torch.tensor(actions, dtype=torch.int64, device=DEVICE)
         next_observations = torch.tensor(next_observations, dtype=torch.float32, device=DEVICE)
@@ -83,7 +84,7 @@ class DqnTrainer:
 
         self.epsilon_scheduled_last_episode = self.config["max_num_episodes"] * self.config["epsilon_final_scheduled_percent"]
 
-        # network
+        # Q-Network
         self.qnet = qnet
         self.target_qnet = target_qnet
         self.target_qnet.load_state_dict(self.qnet.state_dict())
@@ -216,18 +217,6 @@ class DqnTrainer:
 
         # loss is just scalar torch value
         loss = F.mse_loss(targets.detach(), q_values)
-
-        # print("observations.shape: {0}, actions.shape: {1}, "
-        #       "next_observations.shape: {2}, rewards.shape: {3}, dones.shape: {4}".format(
-        #     observations.shape, actions.shape,
-        #     next_observations.shape, rewards.shape, dones.shape
-        # ))
-        # print("state_action_values.shape: {0}".format(state_action_values.shape))
-        # print("next_state_values.shape: {0}".format(next_state_values.shape))
-        # print("target_state_action_values.shape: {0}".format(
-        #     target_state_action_values.shape
-        # ))
-        # print("loss.shape: {0}".format(loss.shape))
 
         self.optimizer.zero_grad()
         loss.backward()
